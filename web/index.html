@@ -4,42 +4,84 @@
     <meta charset="UTF-8">
     <title>Minerador Pro Alpha</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>body { background: #0f172a; color: #f8fafc; }</style>
+    <style>
+        body { background: #0f172a; color: #f8fafc; font-family: sans-serif; }
+        .card { background: #1e293b; border: none; border-radius: 15px; }
+        .result-box { background: #334155; border-radius: 10px; padding: 20px; margin-top: 20px; display: none; }
+        .badge-trend { background: #ef4444; color: white; }
+    </style>
 </head>
 <body class="container py-5">
     <h1 class="text-center mb-4">🚀 Minerador Multi-Plataforma</h1>
     
-    <div class="card bg-dark p-4 mb-4">
+    <div class="card p-4 mb-4 shadow-lg">
         <div class="input-group">
-            <input type="text" id="nicho" class="form-control" placeholder="Digite o nicho (ex: IA, Saúde)">
+            <input type="text" id="nicho" class="form-control" placeholder="Ex: Marketing Digital, Saúde...">
             <select id="plataforma" class="form-select">
-                <option value="todas">Todas as Redes</option>
-                <option value="youtube">YouTube</option>
-                <option value="tiktok">TikTok</option>
+                <option value="YouTube">YouTube</option>
+                <option value="TikTok">TikTok</option>
+                <option value="Instagram">Instagram</option>
             </select>
-            <button onclick="iniciarMineracao()" class="btn btn-primary">MINERAR AGORA</button>
+            <button onclick="iniciarMineracao()" id="btnMinerar" class="btn btn-primary">MINERAR AGORA</button>
         </div>
     </div>
 
-    <div id="status" class="alert alert-info d-none"></div>
+    <div id="status" class="alert alert-info d-none text-center"></div>
+
+    <div id="painelResultados" class="result-box shadow">
+        <h3>📊 Resultados da Mineração</h3>
+        <hr>
+        <div class="row">
+            <div class="col-md-6">
+                <h5>🔥 Tendências Encontradas</h5>
+                <ul id="listaTendencias" class="list-group list-group-flush bg-transparent"></ul>
+            </div>
+            <div class="col-md-6">
+                <h5>🤖 Sugestão de IA (Prompt)</h5>
+                <div id="promptIA" class="p-3 bg-dark border rounded text-info" style="font-family: monospace;"></div>
+            </div>
+        </div>
+    </div>
 
     <script>
         function iniciarMineracao() {
             const nicho = document.getElementById('nicho').value;
             const plataforma = document.getElementById('plataforma').value;
             const statusDiv = document.getElementById('status');
+            const painel = document.getElementById('painelResultados');
             
+            if(!nicho) { alert("Por favor, digite um nicho."); return; }
+
             statusDiv.classList.remove('d-none');
-            statusDiv.innerHTML = `Minerando <b>${nicho}</b> em <b>${plataforma}</b>...`;
+            statusDiv.className = "alert alert-info text-center";
+            statusDiv.innerHTML = "⌛ Minerando dados reais... aguarde.";
+            painel.style.display = "none";
 
             fetch('/minerar', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({nicho, plataforma})
+                body: JSON.stringify({nicho: nicho, plataforma: plataforma})
             })
             .then(res => res.json())
             .then(data => {
-                statusDiv.innerHTML = data.mensagem;
+                statusDiv.className = "alert alert-success text-center";
+                statusDiv.innerHTML = "✅ Dados coletados com sucesso!";
+                
+                // Preencher as informações na tela
+                painel.style.display = "block";
+                
+                // Exemplo de como mostrar as tendências vindas do Python
+                const lista = document.getElementById('listaTendencias');
+                lista.innerHTML = "";
+                data.tendencias.forEach(item => {
+                    lista.innerHTML += `<li class="list-group-item bg-transparent text-white">🔹 ${item} <span class="badge badge-trend float-end">ALTA</span></li>`;
+                });
+
+                document.getElementById('promptIA').innerText = data.prompt;
+            })
+            .catch(err => {
+                statusDiv.className = "alert alert-danger text-center";
+                statusDiv.innerHTML = "❌ Erro ao conectar com o minerador.";
             });
         }
     </script>
